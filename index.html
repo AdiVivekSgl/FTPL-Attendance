@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#128C7E">
+  <meta name="mobile-web-app-capable" content="yes">
+  <title>Frontec Attendance</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #f4f7f6;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: #1f2937;
+    }
+    .card {
+      width: min(92vw, 420px);
+      background: white;
+      border-radius: 20px;
+      padding: 32px 24px;
+      text-align: center;
+      box-shadow: 0 8px 30px rgba(0,0,0,.08);
+    }
+    .icon { font-size: 56px; margin-bottom: 8px; }
+    h1 { margin: 0 0 8px; font-size: 26px; }
+    p { color: #6b7280; line-height: 1.5; margin: 8px 0 24px; }
+    button {
+      width: 100%;
+      border: 0;
+      border-radius: 14px;
+      padding: 16px;
+      font-size: 18px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    #locate {
+      background: #128C7E;
+      color: white;
+    }
+    #whatsapp {
+      background: #25D366;
+      color: white;
+      display: none;
+      margin-top: 12px;
+    }
+    button:disabled { opacity: .6; cursor: wait; }
+    #status {
+      margin-top: 18px;
+      font-size: 15px;
+      min-height: 24px;
+    }
+    .details {
+      display: none;
+      margin-top: 14px;
+      padding: 12px;
+      border-radius: 10px;
+      background: #f0fdf4;
+      font-size: 14px;
+      text-align: left;
+    }
+    .warning { color: #b45309; }
+    .error { color: #b91c1c; }
+    .success { color: #166534; }
+  </style>
+</head>
+<body>
+  <main class="card">
+    <div class="icon">📍</div>
+    <h1>Frontec Attendance</h1>
+    <p>Tap below to get your current location and prepare the WhatsApp attendance message.</p>
+
+    <button id="locate">Get My Location</button>
+    <div id="status"></div>
+    <div id="details"></div>
+    <button id="whatsapp">Open WhatsApp &amp; Send</button>
+  </main>
+
+  <script>
+    // Hardcoded Frontec attendance WhatsApp number.
+    // wa.me requires digits only, without the leading +.
+    const ATTENDANCE_NUMBER = "919100006751";
+
+    const locateButton = document.getElementById("locate");
+    const whatsappButton = document.getElementById("whatsapp");
+    const status = document.getElementById("status");
+    const details = document.getElementById("details");
+
+    let attendanceMessage = "";
+
+    function setStatus(message, className = "") {
+      status.textContent = message;
+      status.className = className;
+    }
+
+    locateButton.addEventListener("click", () => {
+      if (!navigator.geolocation) {
+        setStatus("This browser does not support location services.", "error");
+        return;
+      }
+
+      locateButton.disabled = true;
+      whatsappButton.style.display = "none";
+      details.style.display = "none";
+      setStatus("Getting your location…");
+
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const { latitude, longitude, accuracy } = position.coords;
+
+          const lat = latitude.toFixed(6);
+          const lon = longitude.toFixed(6);
+          const accuracyMeters = Math.round(accuracy);
+
+          const mapUrl = `https://www.google.com/maps?q=${lat},${lon}`;
+
+          attendanceMessage =
+            `📍 FRONTEC ATTENDANCE\\n` +
+            `Location: ${mapUrl}\\n` +
+            `Accuracy: ${accuracyMeters}m`;
+
+          details.innerHTML =
+            `<strong>Location found</strong><br>` +
+            `Accuracy: approximately ${accuracyMeters} m`;
+
+          details.style.display = "block";
+
+          if (accuracyMeters > 100) {
+            setStatus(
+              "Location found, but accuracy is low. You can still send it.",
+              "warning"
+            );
+          } else {
+            setStatus("Location ready.", "success");
+          }
+
+          whatsappButton.style.display = "block";
+          locateButton.disabled = false;
+        },
+        (error) => {
+          locateButton.disabled = false;
+          whatsappButton.style.display = "none";
+
+          let message = "Unable to get your location.";
+
+          switch (error.code) {
+            case error.PERMISSION_DENIED:
+              message = "Location permission was denied. Please allow location access and try again.";
+              break;
+            case error.POSITION_UNAVAILABLE:
+              message = "Your location is currently unavailable. Please try again.";
+              break;
+            case error.TIMEOUT:
+              message = "Location request timed out. Please try again.";
+              break;
+          }
+
+          setStatus(message, "error");
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 15000,
+          maximumAge: 0
+        }
+      );
+    });
+
+    whatsappButton.addEventListener("click", () => {
+      if (!attendanceMessage) return;
+
+      const whatsappUrl =
+        `https://wa.me/${ATTENDANCE_NUMBER}?text=${encodeURIComponent(attendanceMessage)}`;
+
+      window.location.href = whatsappUrl;
+    });
+  </script>
+</body>
+</html>
