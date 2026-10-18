@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#128C7E">
   <meta name="mobile-web-app-capable" content="yes">
-  <title>Frontec Attendance</title>
+  <title>Frontec Attendance &amp; Leave</title>
   <style>
     * { box-sizing: border-box; }
 
@@ -57,6 +57,13 @@
       color: white;
     }
 
+    button + button { margin-top: 12px; }
+
+    button.secondary {
+      background: #e7f5f2;
+      color: #0f6f63;
+    }
+
     button:disabled {
       opacity: .65;
       cursor: wait;
@@ -87,36 +94,185 @@
       font-size: 12px;
       color: #9ca3af;
     }
+
+    /* Leave request popup */
+    .overlay {
+      position: fixed;
+      inset: 0;
+      display: none;
+      align-items: flex-end;
+      justify-content: center;
+      background: rgba(17, 24, 39, .45);
+      z-index: 10;
+    }
+
+    .overlay.open { display: flex; }
+
+    .sheet {
+      width: min(100vw, 440px);
+      max-height: 96vh;
+      overflow-y: auto;
+      background: white;
+      border-radius: 20px 20px 0 0;
+      padding: 20px 16px 24px;
+      text-align: left;
+    }
+
+    @media (min-width: 600px) {
+      .overlay { align-items: center; }
+      .sheet { border-radius: 20px; }
+    }
+
+    .sheet-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+
+    .sheet-head h2 { margin: 0; font-size: 20px; }
+
+    .close {
+      width: auto;
+      padding: 6px 12px;
+      font-size: 22px;
+      line-height: 1;
+      background: transparent;
+      color: #6b7280;
+    }
+
+    .field {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 10px 12px;
+      border-radius: 10px;
+      background: #f9fafb;
+      font-size: 14px;
+      margin-bottom: 8px;
+    }
+
+    .field span:first-child { color: #6b7280; }
+    .field span:last-child { font-weight: 600; text-align: right; }
+
+    .month {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin: 14px 0 6px;
+    }
+
+    .month strong { font-size: 16px; }
+
+    .month button {
+      width: 40px;
+      padding: 6px 0;
+      font-size: 20px;
+      background: #f3f4f6;
+      color: #1f2937;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 2px;
+      text-align: center;
+    }
+
+    .grid .dow {
+      font-size: 12px;
+      color: #9ca3af;
+      padding: 4px 0;
+    }
+
+    .grid button {
+      margin: 0;
+      padding: 10px 0;
+      border-radius: 10px;
+      font-size: 15px;
+      font-weight: 500;
+      background: transparent;
+      color: #1f2937;
+    }
+
+    .grid button.weekend { color: #9ca3af; }
+    .grid button.today { box-shadow: inset 0 0 0 2px #128C7E; }
+    .grid button.in-range { background: #d1f0ea; border-radius: 0; }
+    .grid button.start, .grid button.end { background: #128C7E; color: white; }
+    .grid button:disabled { opacity: .3; cursor: default; }
+
+    .hint {
+      font-size: 13px;
+      color: #6b7280;
+      margin: 10px 0 14px;
+      min-height: 20px;
+    }
   </style>
 </head>
 
 <body>
   <main class="card">
-    <div class="icon">📍</div>
+    <div class="icon">🗓️</div>
 
-    <h1>Frontec Attendance</h1>
+    <h1>Frontec Attendance &amp; Leave</h1>
 
     <p>
-      Tap below to share your current location for attendance.
-      WhatsApp will open automatically when your location is ready.
+      Mark attendance, request leave or check who is on leave.
+      Each option opens WhatsApp with a message ready to send.
     </p>
 
     <button id="locate">
-      📍 Get My Location
+      📍 Mark Attendance
+    </button>
+    <button id="leave" class="secondary">
+      🌴 Request Leave
+    </button>
+    <button id="calendar" class="secondary">
+      📅 Leave Calendar
     </button>
 
     <div id="status"></div>
     <div id="details" class="details"></div>
 
     <div class="small">
-      Your location is sent to Frontec through WhatsApp.
+      Your messages go to Frontec through WhatsApp. Your employee record is
+      matched from your WhatsApp number.
     </div>
   </main>
+
+  <div id="leave-popup" class="overlay" role="dialog" aria-modal="true" aria-labelledby="leave-title">
+    <div class="sheet">
+      <div class="sheet-head">
+        <h2 id="leave-title">🌴 Request Leave</h2>
+        <button id="leave-close" class="close" aria-label="Close">×</button>
+      </div>
+
+      <div class="field"><span>Employee</span><span>From your WhatsApp number</span></div>
+      <div class="field"><span>Leave Type</span><span>Casual Leave</span></div>
+      <div class="field"><span>Dates</span><span id="range-label">Pick start and end</span></div>
+
+      <div class="month">
+        <button id="prev-month" aria-label="Previous month">‹</button>
+        <strong id="month-label"></strong>
+        <button id="next-month" aria-label="Next month">›</button>
+      </div>
+      <div id="days" class="grid"></div>
+
+      <div id="range-hint" class="hint">Tap the first day of leave, then the last day.</div>
+
+      <button id="leave-send" disabled>Send Leave Request on WhatsApp</button>
+    </div>
+  </div>
 
   <script>
     // Frontec attendance WhatsApp number.
     // wa.me requires digits only, without the leading +.
     const ATTENDANCE_NUMBER = "919100006751";
+
+    // Same window Frontec ERP accepts for a leave request.
+    const MAX_DAYS_BACK = 30;
+    const MAX_DAYS_AHEAD = 365;
+    const MAX_SPAN_DAYS = 60;
 
     const locateButton = document.getElementById("locate");
     const status = document.getElementById("status");
@@ -137,6 +293,13 @@
       status.textContent = message;
       status.className = className;
     }
+
+    function openWhatsApp(message) {
+      window.location.href =
+        `https://wa.me/${ATTENDANCE_NUMBER}?text=${encodeURIComponent(message)}`;
+    }
+
+    // ---- 1) Mark Attendance ------------------------------------------------
 
     locateButton.addEventListener("click", () => {
       if (!navigator.geolocation) {
@@ -188,10 +351,8 @@
 
           // Open WhatsApp automatically.
           // The user still needs to press WhatsApp's Send button.
-          const whatsappUrl =
-            `https://wa.me/${ATTENDANCE_NUMBER}?text=${encodeURIComponent(message)}`;
-
-          window.location.href = whatsappUrl;
+          locateButton.disabled = false;
+          openWhatsApp(message);
         },
 
         (error) => {
@@ -225,6 +386,195 @@
           timeout: 15000,
           maximumAge: 0
         }
+      );
+    });
+
+    // ---- 2) Request Leave: start/end date calendar popup ------------------
+
+    const popup = document.getElementById("leave-popup");
+    const daysGrid = document.getElementById("days");
+    const monthLabel = document.getElementById("month-label");
+    const rangeLabel = document.getElementById("range-label");
+    const rangeHint = document.getElementById("range-hint");
+    const sendLeave = document.getElementById("leave-send");
+
+    const DOW = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+    const DAY_MS = 24 * 60 * 60 * 1000;
+
+    const today = startOfDay(new Date());
+    const minDate = addDays(today, -MAX_DAYS_BACK);
+    const maxDate = addDays(today, MAX_DAYS_AHEAD);
+
+    let viewMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+    let rangeStart = null;
+    let rangeEnd = null;
+
+    function startOfDay(d) {
+      return new Date(d.getFullYear(), d.getMonth(), d.getDate());
+    }
+
+    function addDays(d, n) {
+      return new Date(d.getFullYear(), d.getMonth(), d.getDate() + n);
+    }
+
+    function sameDay(a, b) {
+      return a && b && a.getTime() === b.getTime();
+    }
+
+    function daysBetween(a, b) {
+      return Math.round((b - a) / DAY_MS) + 1;
+    }
+
+    // Local date as YYYY-MM-DD (toISOString would shift it to UTC).
+    function isoDate(d) {
+      const m = String(d.getMonth() + 1).padStart(2, "0");
+      const day = String(d.getDate()).padStart(2, "0");
+      return `${d.getFullYear()}-${m}-${day}`;
+    }
+
+    function shortDate(d) {
+      return d.toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" });
+    }
+
+    function weekday(d) {
+      return d.toLocaleDateString("en-GB", { weekday: "short" });
+    }
+
+    function renderCalendar() {
+      monthLabel.textContent =
+        viewMonth.toLocaleDateString("en-GB", { month: "long", year: "numeric" });
+
+      daysGrid.innerHTML = "";
+      DOW.forEach((name) => {
+        const cell = document.createElement("div");
+        cell.className = "dow";
+        cell.textContent = name;
+        daysGrid.appendChild(cell);
+      });
+
+      // Monday-first offset of the 1st of the month.
+      const offset = (viewMonth.getDay() + 6) % 7;
+      for (let i = 0; i < offset; i++) {
+        daysGrid.appendChild(document.createElement("div"));
+      }
+
+      const lastDay = new Date(viewMonth.getFullYear(), viewMonth.getMonth() + 1, 0).getDate();
+      for (let dayNumber = 1; dayNumber <= lastDay; dayNumber++) {
+        const day = new Date(viewMonth.getFullYear(), viewMonth.getMonth(), dayNumber);
+        const button = document.createElement("button");
+        button.type = "button";
+        button.textContent = dayNumber;
+        button.setAttribute("aria-label", day.toDateString());
+
+        if (day < minDate || day > maxDate) button.disabled = true;
+        if ((day.getDay() + 6) % 7 >= 5) button.classList.add("weekend");
+        if (sameDay(day, today)) button.classList.add("today");
+        if (sameDay(day, rangeStart)) button.classList.add("start");
+        if (sameDay(day, rangeEnd)) button.classList.add("end");
+        if (rangeStart && rangeEnd && day > rangeStart && day < rangeEnd) {
+          button.classList.add("in-range");
+        }
+
+        button.addEventListener("click", () => pickDay(day));
+        daysGrid.appendChild(button);
+      }
+
+      document.getElementById("prev-month").disabled =
+        new Date(viewMonth.getFullYear(), viewMonth.getMonth(), 0) < minDate;
+      document.getElementById("next-month").disabled =
+        new Date(viewMonth.getFullYear(), viewMonth.getMonth() + 1, 1) > maxDate;
+
+      renderSelection();
+    }
+
+    function pickDay(day) {
+      if (!rangeStart || rangeEnd || day < rangeStart) {
+        // First tap, a fresh selection, or a day before the current start.
+        rangeStart = day;
+        rangeEnd = null;
+      } else if (daysBetween(rangeStart, day) > MAX_SPAN_DAYS) {
+        rangeHint.textContent = `A single request can cover at most ${MAX_SPAN_DAYS} days.`;
+        return;
+      } else {
+        rangeEnd = day;
+      }
+      renderCalendar();
+    }
+
+    function selectedRange() {
+      if (!rangeStart) return null;
+      return [rangeStart, rangeEnd || rangeStart];
+    }
+
+    function renderSelection() {
+      const range = selectedRange();
+      sendLeave.disabled = !range;
+      if (!range) {
+        rangeLabel.textContent = "Pick start and end";
+        rangeHint.textContent = "Tap the first day of leave, then the last day.";
+        return;
+      }
+      const [from, to] = range;
+      const days = daysBetween(from, to);
+      rangeLabel.textContent = sameDay(from, to)
+        ? `${shortDate(from)} (1 day)`
+        : `${shortDate(from)} → ${shortDate(to)} (${days} days)`;
+      rangeHint.textContent = rangeEnd
+        ? "Frontec ERP replies with the leave days it counted (holidays may be excluded)."
+        : "Tap the last day of leave, or send now for a single day.";
+    }
+
+    document.getElementById("prev-month").addEventListener("click", () => {
+      viewMonth = new Date(viewMonth.getFullYear(), viewMonth.getMonth() - 1, 1);
+      renderCalendar();
+    });
+
+    document.getElementById("next-month").addEventListener("click", () => {
+      viewMonth = new Date(viewMonth.getFullYear(), viewMonth.getMonth() + 1, 1);
+      renderCalendar();
+    });
+
+    document.getElementById("leave").addEventListener("click", () => {
+      rangeStart = null;
+      rangeEnd = null;
+      viewMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+      renderCalendar();
+      popup.classList.add("open");
+    });
+
+    function closePopup() {
+      popup.classList.remove("open");
+    }
+
+    document.getElementById("leave-close").addEventListener("click", closePopup);
+    popup.addEventListener("click", (event) => {
+      if (event.target === popup) closePopup();
+    });
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape") closePopup();
+    });
+
+    sendLeave.addEventListener("click", () => {
+      const range = selectedRange();
+      if (!range) return;
+      const [from, to] = range;
+      const message =
+        `🌴 FRONTEC LEAVE REQUEST\n` +
+        `Leave Type: Casual Leave\n` +
+        `From: ${isoDate(from)} (${weekday(from)})\n` +
+        `To: ${isoDate(to)} (${weekday(to)})`;
+      closePopup();
+      setStatus("Opening WhatsApp with your leave request…", "success");
+      openWhatsApp(message);
+    });
+
+    // ---- 3) Leave Calendar ------------------------------------------------
+
+    document.getElementById("calendar").addEventListener("click", () => {
+      setStatus("Opening WhatsApp - Frontec will reply with the calendar link…", "success");
+      openWhatsApp(
+        `📅 FRONTEC LEAVE CALENDAR\n` +
+        `Please send me the leave calendar link.`
       );
     });
   </script>
