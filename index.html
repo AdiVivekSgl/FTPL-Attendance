@@ -570,7 +570,43 @@
 
     // ---- 3) Leave Calendar ------------------------------------------------
 
+    // The calendar is guarded by a key that must not live in this (public)
+    // page. The WhatsApp bot sends this page's link as ".../#k=<key>"; the
+    // fragment never reaches GitHub. The key is saved on this phone and removed
+    // from the address bar, so the button opens the calendar directly.
+    const CALENDAR_URL = "https://livefrontec.frappe.cloud/leave-calendar";
+    const CALENDAR_KEY_STORAGE = "frontecCalendarKey";
+
+    function rememberCalendarKey() {
+      const key = new URLSearchParams(window.location.hash.slice(1)).get("k");
+      if (!key) return;
+      try {
+        localStorage.setItem(CALENDAR_KEY_STORAGE, key);
+      } catch (e) {
+        // Storage blocked (private mode): the WhatsApp fallback still works.
+      }
+      history.replaceState(null, "", window.location.pathname + window.location.search);
+    }
+
+    function savedCalendarKey() {
+      try {
+        return localStorage.getItem(CALENDAR_KEY_STORAGE);
+      } catch (e) {
+        return null;
+      }
+    }
+
+    rememberCalendarKey();
+
     document.getElementById("calendar").addEventListener("click", () => {
+      const key = savedCalendarKey();
+      if (key) {
+        setStatus("Opening the leave calendar…", "success");
+        window.location.href = `${CALENDAR_URL}?key=${encodeURIComponent(key)}`;
+        return;
+      }
+      // No key on this phone yet: ask the bot, which replies with the
+      // calendar link and a page link that remembers the key.
       setStatus("Opening WhatsApp - Frontec will reply with the calendar link…", "success");
       openWhatsApp(
         `📅 FRONTEC LEAVE CALENDAR\n` +
