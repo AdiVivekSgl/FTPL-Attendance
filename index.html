@@ -122,6 +122,17 @@
     const status = document.getElementById("status");
     const details = document.getElementById("details");
 
+    // One-time reference for each attendance message, e.g. "FA-MGW3X1K2-9F3A21C7".
+    // Frontec ERP records each reference only once, so forwarding or resending
+    // an earlier attendance message is rejected.
+    function newMessageRef() {
+      const random = new Uint32Array(1);
+      crypto.getRandomValues(random);
+      const time = Date.now().toString(36).toUpperCase();
+      const suffix = random[0].toString(16).toUpperCase().padStart(8, "0");
+      return `FA-${time}-${suffix}`;
+    }
+
     function setStatus(message, className = "") {
       status.textContent = message;
       status.className = className;
@@ -154,7 +165,8 @@
           const message =
             `📍 FRONTEC ATTENDANCE\n` +
             `Location: ${mapUrl}\n` +
-            `Accuracy: ${accuracyMeters}m`;
+            `Accuracy: ${accuracyMeters}m\n` +
+            `Ref: ${newMessageRef()}`;
 
           details.innerHTML =
             `<strong>Location found</strong><br>` +
