@@ -3,96 +3,195 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" content="#128C7E">
+  <meta name="theme-color" content="#DA251C">
   <meta name="mobile-web-app-capable" content="yes">
   <title>Frontec Attendance &amp; Leave</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bitter:wght@400;700&family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
+    /* Frontec design language (frontec.co.in): red brand bar with a white
+       Montserrat wordmark, Bitter text, near-black ink on light grey. */
+    :root {
+      --frontec-red: #DA251C;
+      --frontec-red-dark: #B81E17;
+      --frontec-red-tint: #FBE4E3;
+      --ink: #1F2020;
+      --ink-muted: #5F6368;
+      --ink-faint: #9AA0A6;
+      --line: #DADCE0;
+      --surface: #FFFFFF;
+      --canvas: #F2F2F2;
+      --heading: "Montserrat", Arial, sans-serif;
+      --text: "Bitter", Georgia, serif;
+    }
+
     * { box-sizing: border-box; }
 
     body {
       margin: 0;
       min-height: 100vh;
       display: flex;
-      align-items: center;
+      flex-direction: column;
+      background: var(--canvas);
+      font-family: var(--text);
+      color: var(--ink);
+    }
+
+    /* Brand bar, like the frontec.co.in header */
+    .brand {
+      background: var(--frontec-red);
+      color: white;
+      padding: 14px 20px;
+      display: flex;
+      align-items: baseline;
+      gap: 14px;
+    }
+
+    .brand .wordmark {
+      font-family: var(--heading);
+      font-weight: 700;
+      font-size: 24px;
+      letter-spacing: -.3px;
+    }
+
+    .brand .section {
+      font-family: var(--heading);
+      font-weight: 400;
+      font-size: 15px;
+      opacity: .95;
+    }
+
+    .wrap {
+      flex: 1;
+      display: flex;
+      align-items: flex-start;
       justify-content: center;
-      background: #f4f7f6;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      color: #1f2937;
+      padding: 24px 16px 32px;
     }
 
     .card {
-      width: min(92vw, 420px);
-      background: white;
-      border-radius: 20px;
-      padding: 32px 24px;
-      text-align: center;
-      box-shadow: 0 8px 30px rgba(0,0,0,.08);
-    }
-
-    .icon {
-      font-size: 56px;
-      margin-bottom: 8px;
+      width: min(100%, 440px);
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 24px 20px;
     }
 
     h1 {
-      margin: 0 0 8px;
-      font-size: 26px;
+      margin: 0 0 6px;
+      font-family: var(--heading);
+      font-weight: 600;
+      font-size: 22px;
+      color: var(--ink);
     }
 
     p {
-      color: #6b7280;
-      line-height: 1.5;
-      margin: 8px 0 24px;
+      color: var(--ink-muted);
+      line-height: 1.55;
+      font-size: 15px;
+      margin: 0 0 20px;
     }
 
     button {
-      width: 100%;
-      border: 0;
-      border-radius: 14px;
-      padding: 17px 16px;
-      font-size: 18px;
-      font-weight: 700;
+      font-family: var(--heading);
       cursor: pointer;
-      background: #128C7E;
-      color: white;
     }
 
-    button + button { margin-top: 12px; }
-
-    button.secondary {
-      background: #e7f5f2;
-      color: #0f6f63;
+    button:focus-visible {
+      outline: 3px solid var(--frontec-red);
+      outline-offset: 2px;
     }
 
     button:disabled {
-      opacity: .65;
+      opacity: .6;
       cursor: wait;
     }
 
-    #status {
-      margin-top: 18px;
-      font-size: 15px;
-      min-height: 24px;
+    /* The three options */
+    .action {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: var(--surface);
+      color: var(--ink);
+      text-align: left;
+      transition: border-color .15s, background .15s;
     }
 
-    .warning { color: #b45309; }
-    .error { color: #b91c1c; }
-    .success { color: #166534; }
+    .action + .action { margin-top: 10px; }
+
+    .action:hover { border-color: var(--frontec-red); background: #FFFBFB; }
+
+    .action.primary {
+      background: var(--frontec-red);
+      border-color: var(--frontec-red);
+      color: white;
+    }
+
+    .action.primary:hover { background: var(--frontec-red-dark); border-color: var(--frontec-red-dark); }
+
+    .action-icon {
+      flex: none;
+      width: 44px;
+      height: 44px;
+      display: grid;
+      place-items: center;
+      border-radius: 6px;
+      background: var(--frontec-red-tint);
+      font-size: 22px;
+    }
+
+    .action.primary .action-icon { background: rgba(255, 255, 255, .18); }
+
+    .action-text { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+    .action-text strong { font-size: 16px; font-weight: 600; }
+    .action-text small { font-family: var(--text); font-size: 13px; color: var(--ink-muted); }
+    .action.primary .action-text small { color: rgba(255, 255, 255, .88); }
+
+    .chevron { font-size: 24px; line-height: 1; color: var(--ink-faint); }
+    .action.primary .chevron { color: white; }
+
+    #status {
+      margin-top: 16px;
+      font-size: 15px;
+      min-height: 22px;
+    }
+
+    .warning { color: #A35200; }
+    .error { color: var(--frontec-red-dark); }
+    .success { color: #1E7B34; }
 
     .details {
       display: none;
-      margin-top: 14px;
+      margin-top: 12px;
       padding: 12px;
-      border-radius: 10px;
-      background: #f0fdf4;
+      border-radius: 6px;
+      border-left: 4px solid var(--frontec-red);
+      background: var(--canvas);
       font-size: 14px;
-      text-align: left;
     }
 
     .small {
-      margin-top: 22px;
+      margin-top: 20px;
+      padding-top: 14px;
+      border-top: 1px solid var(--line);
       font-size: 12px;
-      color: #9ca3af;
+      line-height: 1.5;
+      color: var(--ink-faint);
+    }
+
+    footer {
+      text-align: center;
+      font-family: var(--heading);
+      font-size: 11px;
+      letter-spacing: .4px;
+      color: var(--ink-faint);
+      padding: 0 16px 20px;
     }
 
     /* Leave request popup */
@@ -102,7 +201,7 @@
       display: none;
       align-items: flex-end;
       justify-content: center;
-      background: rgba(17, 24, 39, .45);
+      background: rgba(31, 32, 32, .5);
       z-index: 10;
     }
 
@@ -112,65 +211,76 @@
       width: min(100vw, 440px);
       max-height: 96vh;
       overflow-y: auto;
-      background: white;
-      border-radius: 20px 20px 0 0;
-      padding: 20px 16px 24px;
+      background: var(--surface);
+      border-radius: 10px 10px 0 0;
       text-align: left;
     }
 
     @media (min-width: 600px) {
       .overlay { align-items: center; }
-      .sheet { border-radius: 20px; }
+      .sheet { border-radius: 8px; }
     }
 
     .sheet-head {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-bottom: 8px;
+      padding: 14px 12px 14px 18px;
+      background: var(--frontec-red);
+      color: white;
     }
 
-    .sheet-head h2 { margin: 0; font-size: 20px; }
+    .sheet-head h2 {
+      margin: 0;
+      font-family: var(--heading);
+      font-weight: 600;
+      font-size: 18px;
+    }
 
     .close {
       width: auto;
-      padding: 6px 12px;
-      font-size: 22px;
+      border: 0;
+      padding: 4px 10px;
+      font-size: 26px;
       line-height: 1;
       background: transparent;
-      color: #6b7280;
+      color: white;
     }
+
+    .sheet-body { padding: 16px 16px 20px; }
 
     .field {
       display: flex;
       justify-content: space-between;
       gap: 12px;
       padding: 10px 12px;
-      border-radius: 10px;
-      background: #f9fafb;
+      border-bottom: 1px solid var(--line);
       font-size: 14px;
-      margin-bottom: 8px;
     }
 
-    .field span:first-child { color: #6b7280; }
-    .field span:last-child { font-weight: 600; text-align: right; }
+    .field span:first-child { color: var(--ink-muted); }
+    .field span:last-child { font-family: var(--heading); font-weight: 600; text-align: right; }
 
     .month {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin: 14px 0 6px;
+      margin: 16px 0 6px;
     }
 
-    .month strong { font-size: 16px; }
+    .month strong { font-family: var(--heading); font-weight: 600; font-size: 16px; }
 
     .month button {
       width: 40px;
-      padding: 6px 0;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 4px 0;
       font-size: 20px;
-      background: #f3f4f6;
-      color: #1f2937;
+      background: var(--surface);
+      color: var(--ink);
     }
+
+    .month button:disabled { opacity: .35; cursor: default; }
 
     .grid {
       display: grid;
@@ -180,87 +290,130 @@
     }
 
     .grid .dow {
-      font-size: 12px;
-      color: #9ca3af;
-      padding: 4px 0;
+      font-family: var(--heading);
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      color: var(--ink-faint);
+      padding: 6px 0;
     }
 
     .grid button {
       margin: 0;
+      border: 0;
       padding: 10px 0;
-      border-radius: 10px;
+      border-radius: 6px;
       font-size: 15px;
       font-weight: 500;
       background: transparent;
-      color: #1f2937;
+      color: var(--ink);
     }
 
-    .grid button.weekend { color: #9ca3af; }
-    .grid button.today { box-shadow: inset 0 0 0 2px #128C7E; }
-    .grid button.in-range { background: #d1f0ea; border-radius: 0; }
-    .grid button.start, .grid button.end { background: #128C7E; color: white; }
+    .grid button:hover:not(:disabled) { background: var(--canvas); }
+    .grid button.weekend { color: var(--ink-faint); }
+    .grid button.today { box-shadow: inset 0 0 0 2px var(--frontec-red); }
+    .grid button.in-range, .grid button.in-range:hover { background: var(--frontec-red-tint); border-radius: 0; }
+    .grid button.start, .grid button.end,
+    .grid button.start:hover, .grid button.end:hover { background: var(--frontec-red); color: white; font-weight: 700; }
     .grid button:disabled { opacity: .3; cursor: default; }
 
     .hint {
       font-size: 13px;
-      color: #6b7280;
-      margin: 10px 0 14px;
+      color: var(--ink-muted);
+      margin: 12px 0 14px;
       min-height: 20px;
     }
+
+    .send {
+      width: 100%;
+      border: 0;
+      border-radius: 6px;
+      padding: 15px 16px;
+      font-size: 16px;
+      font-weight: 600;
+      background: var(--frontec-red);
+      color: white;
+    }
+
+    .send:hover:not(:disabled) { background: var(--frontec-red-dark); }
+    .send:disabled { opacity: .45; cursor: default; }
   </style>
 </head>
 
 <body>
-  <main class="card">
-    <div class="icon">🗓️</div>
+  <header class="brand">
+    <span class="wordmark">Frontec</span>
+    <span class="section">Attendance &amp; Leave</span>
+  </header>
 
-    <h1>Frontec Attendance &amp; Leave</h1>
+  <div class="wrap">
+    <main class="card">
+      <h1>What would you like to do?</h1>
 
-    <p>
-      Mark attendance, request leave or check who is on leave.
-      Each option opens WhatsApp with a message ready to send.
-    </p>
+      <p>
+        Each option opens WhatsApp with a message ready to send to Frontec.
+      </p>
 
-    <button id="locate">
-      📍 Mark Attendance
-    </button>
-    <button id="leave" class="secondary">
-      🌴 Request Leave
-    </button>
-    <button id="calendar" class="secondary">
-      📅 Leave Calendar
-    </button>
+      <button id="locate" class="action primary">
+        <span class="action-icon" aria-hidden="true">📍</span>
+        <span class="action-text">
+          <strong>Mark Attendance</strong>
+          <small>Share your current location</small>
+        </span>
+        <span class="chevron" aria-hidden="true">›</span>
+      </button>
+      <button id="leave" class="action">
+        <span class="action-icon" aria-hidden="true">🌴</span>
+        <span class="action-text">
+          <strong>Request Leave</strong>
+          <small>Pick your dates - Casual Leave</small>
+        </span>
+        <span class="chevron" aria-hidden="true">›</span>
+      </button>
+      <button id="calendar" class="action">
+        <span class="action-icon" aria-hidden="true">📅</span>
+        <span class="action-text">
+          <strong>Leave Calendar</strong>
+          <small>See who is on leave</small>
+        </span>
+        <span class="chevron" aria-hidden="true">›</span>
+      </button>
 
-    <div id="status"></div>
-    <div id="details" class="details"></div>
+      <div id="status" role="status"></div>
+      <div id="details" class="details"></div>
 
-    <div class="small">
-      Your messages go to Frontec through WhatsApp. Your employee record is
-      matched from your WhatsApp number.
-    </div>
-  </main>
+      <div class="small">
+        Your messages go to Frontec through WhatsApp. Your employee record is
+        matched from your WhatsApp number.
+      </div>
+    </main>
+  </div>
+
+  <footer>FRONTIER TECHNOLOGIES PVT. LTD.</footer>
 
   <div id="leave-popup" class="overlay" role="dialog" aria-modal="true" aria-labelledby="leave-title">
     <div class="sheet">
       <div class="sheet-head">
-        <h2 id="leave-title">🌴 Request Leave</h2>
+        <h2 id="leave-title">Request Leave</h2>
         <button id="leave-close" class="close" aria-label="Close">×</button>
       </div>
 
-      <div class="field"><span>Employee</span><span>From your WhatsApp number</span></div>
-      <div class="field"><span>Leave Type</span><span>Casual Leave</span></div>
-      <div class="field"><span>Dates</span><span id="range-label">Pick start and end</span></div>
+      <div class="sheet-body">
+        <div class="field"><span>Employee</span><span>From your WhatsApp number</span></div>
+        <div class="field"><span>Leave Type</span><span>Casual Leave</span></div>
+        <div class="field"><span>Dates</span><span id="range-label">Pick start and end</span></div>
 
-      <div class="month">
-        <button id="prev-month" aria-label="Previous month">‹</button>
-        <strong id="month-label"></strong>
-        <button id="next-month" aria-label="Next month">›</button>
+        <div class="month">
+          <button id="prev-month" aria-label="Previous month">‹</button>
+          <strong id="month-label"></strong>
+          <button id="next-month" aria-label="Next month">›</button>
+        </div>
+        <div id="days" class="grid"></div>
+
+        <div id="range-hint" class="hint">Tap the first day of leave, then the last day.</div>
+
+        <button id="leave-send" class="send" disabled>Send Leave Request on WhatsApp</button>
       </div>
-      <div id="days" class="grid"></div>
-
-      <div id="range-hint" class="hint">Tap the first day of leave, then the last day.</div>
-
-      <button id="leave-send" disabled>Send Leave Request on WhatsApp</button>
     </div>
   </div>
 
